@@ -14,14 +14,13 @@ const CC_FLAGS: &[&'static str] = &[
 
 #[cfg(target_os="windows")]
 const CC_FLAGS: &[&'static str] = &[
-	"/nologo",
-    "/O2",
+    "/nologo",
     "/Ox",
     "/GS-",
     "/D__NT__",
     "/DNDEBUG",
-	"/MT",
-	"/Feuasm"
+    "/MT",
+    "/Feuasm"
 ];
 
 #[cfg(target_os="windows")]
