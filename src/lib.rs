@@ -1,10 +1,4 @@
-
 pub const UASM_PATH: &'static str = env!("UASM_PATH");
-
-fn main() {
-    println!("uasm @ {}",UASM_PATH);
-    let status = std::process::Command::new(UASM_PATH).spawn();
-}
 
 #[cfg(test)]
 mod tests {
