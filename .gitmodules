@@ -1,0 +1,3 @@
+[submodule "UASM"]
+	path = UASM
+	url = git@github.com:Terraspace/UASM.git
