@@ -4,6 +4,9 @@ version = "1.0.0"
 edition = "2024"
 description = "A library for Cargo build scripts for providing the UASM assembler."
 authors = ["UnladenCoconut <unladencoconut@gmail.com>", "John Hankinson", "Branislav Habus" ]
+repository = "https://github.com/Benkol003/uasm-rs"
+license-file = "UASM/License.txt"
+readme = "readme.md"
 
 [dependencies]
 
