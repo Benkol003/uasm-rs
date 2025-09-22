@@ -1,5 +1,5 @@
 ### uasm-rs
-A library for Cargo build scripts for providing the UASM assembler.
+A library to build the UASM compiler, for usage in build scripts.
 
 #### Usage
 This crate provides one export, which is the path to the built UASM executable.

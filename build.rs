@@ -100,8 +100,6 @@ const SOURCES: &[&'static str] = &[
     "types.c"
 ];
 
-//gcc
-
 fn main() -> Result<(),Box<dyn std::error::Error>>{
 
     let cwd = std::env::current_dir().unwrap();
