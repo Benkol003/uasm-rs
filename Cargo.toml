@@ -1,12 +1,13 @@
 [package]
 name = "uasm"
-version = "1.0.2+2.57"
+version = "1.0.4+2.57"
 edition = "2024"
 description = "A library to build the UASM compiler, for usage in build scripts."
 authors = ["UnladenCoconut <unladencoconut@gmail.com>", "John Hankinson", "Branislav Habus" ]
 repository = "https://github.com/Benkol003/uasm-rs"
 license = "Watcom-1.0"
 readme = "readme.md"
+documentation = "https://docs.rs/uasm/"
 
 [dependencies]
 
