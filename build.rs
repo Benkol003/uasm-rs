@@ -1,39 +1,6 @@
+use std::path::{Path, PathBuf};
 
-
-#[cfg(any(target_os="linux", target_os = "macos"))]
-const CC_FLAGS: &[&'static str] = &[
-    "-O3",
-    "-D__UNIX__",
-    "-std=c99", 
-    "-Wno-implicit-function-declaration", 
-    "-Wno-incompatible-pointer-types",
-    "-Wno-int-conversion",
-	"-Wno-enum-conversion",
-	"-ouasm"
-	];
-
-#[cfg(target_os="windows")]
-const CC_FLAGS: &[&'static str] = &[
-    "/nologo",
-    "/Ox",
-    "/GS-",
-    "/D__NT__",
-    "/DNDEBUG",
-    "/MT",
-    "/Feuasm"
-];
-
-#[cfg(target_os="windows")]
-const LINK_FLAGS: &[&'static str] = &[
-	"/link",
-	"/SUSBSYSTEM:CONSOLE",
-];
-
-#[cfg(any(target_os="linux", target_os = "macos"))]
-const LINK_FLAGS: &[&'static str] = &[
-];
-
-const SOURCES: &[&'static str] = &[
+const SOURCES: &[&str] = &[
 	"apiemu.c",
 	"assemble.c",
 	"assume.c",
@@ -100,30 +67,97 @@ const SOURCES: &[&'static str] = &[
     "types.c"
 ];
 
+#[cfg(any(target_os="linux", target_os = "macos"))]
+fn build<P>(inc_dir: PathBuf, sources: P, out_dir: PathBuf) -> PathBuf
+    where
+        P: IntoIterator,
+        P::Item: AsRef<Path>,
+{
+	let objs = cc::Build::new()
+	.include(inc_dir)
+	.files(sources)
+	.opt_level(3)
+	.std("c99")
+	.define("__UNIX__", None)
+    .flag("-Wno-implicit-function-declaration")
+    .flag("-Wno-incompatible-pointer-types")
+    .flag("-Wno-int-conversion")
+	.flag("-w")
+	.compile_intermediates();
+
+	let status = cc::Build::new().get_compiler().to_command()
+	.arg("-o").arg(out_dir.join("uasm"))
+	.args(&objs)
+	.status().unwrap();
+
+	if !status.success() {
+		panic!("cc: exit with code {}",status);
+	}
+
+	out_dir.join("uasm")
+}
+
+#[cfg(target_os="windows")]
+fn cl_arch_arg() -> &'static str {
+		match std::env::var("CARGO_CFG_TARGET_ARCH").as_deref() {
+		Ok("x86_64") => "X64",
+		Ok("x86")    => "X86",
+		Ok("aarch64")=> "ARM64",
+		Ok("arm")    => "ARM",
+		Ok(a)  => panic!("unsupported target arch: {}",a),
+		Err(e) => panic!("{}",e)
+	}
+}
+
+#[cfg(target_os="windows")]
+fn build<P>(inc_dir: PathBuf, sources: P, out_dir: PathBuf) -> PathBuf
+    where
+        P: IntoIterator,
+        P::Item: AsRef<Path>,
+{
+	let objs = cc::Build::new()
+	.include(inc_dir)
+	.files(sources)
+	.opt_level(3)
+	.flag("/Ox")
+	.flag("/GS-")
+	.flag("/D__NT__")
+	.flag("/DNDEBUG")
+	.static_crt(true)
+	.compile_intermediates();
+
+	let status = cc::Build::new().get_compiler().to_command()
+		.current_dir(&out_dir)
+		.args(&objs)
+		.arg("/Feuasm.exe")
+		.arg("/MT")
+		.arg("/link")
+		.arg(format!("/MACHINE:{}",cl_arch_arg()))
+		.arg("/SUBSYSTEM:CONSOLE")
+		.status().unwrap();
+	if !status.success() {
+		panic!("cc: exit with code {}",status);
+	}
+
+	out_dir.join("uasm.exe")
+}
+
+
 fn main() -> Result<(),Box<dyn std::error::Error>>{
 
     let cwd = std::env::current_dir().unwrap();
 	let uasm_dir =cwd.join("UASM");
 	let inc_dir  =uasm_dir.join("H");
-
-	#[cfg(any(target_os="linux", target_os = "macos"))]
-	let inc_flag = format!("-I{}",inc_dir.display());
-
-	#[cfg(target_os="windows")]
-	let inc_flag = format!("/I{}",inc_dir.display());
-
     let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    let uasm_exe = out_dir.join("uasm");
+	let sources = SOURCES.iter().map(|s| uasm_dir.join(s));
+	let uasm = build(inc_dir,sources,out_dir);
 
-	let status  = cc::Build::new().get_compiler().to_command()
-	.current_dir(out_dir).args(CC_FLAGS).args(SOURCES.iter().map(|s| uasm_dir.join(s)))
-	.arg(inc_flag).args(LINK_FLAGS).status()?;
-
-	if !status.success() {
-		return Err(format!("cc compiler failed with exit code {}",status.code().unwrap()).into());
+	if !uasm.exists() {
+		panic!("expected uasm to be built but did not find {}",uasm.display());
 	}
 
-	println!("cargo::rustc-env=UASM_PATH={}",uasm_exe.display());
+	println!("cargo::metadata=PATH={}",uasm.display());
+	println!("cargo::rustc-env=UASM_PATH={}",uasm.display());
     Ok(())
 }
 
