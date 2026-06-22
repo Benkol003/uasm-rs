@@ -10,9 +10,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn run_uasm() -> Result<(),Box<dyn Error>> {
+    fn run_uasm() -> Result<(), Box<dyn Error>> {
         let status = std::process::Command::new(UASM_PATH).arg("-h").status()?;
-        assert!(status.success(),"uasm returned with non-zero exit code: {}",status.code().unwrap());
+        assert!(
+            status.success(),
+            "uasm returned with non-zero exit code: {}",
+            status.code().unwrap()
+        );
         Ok(())
     }
 }
